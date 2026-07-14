@@ -1,0 +1,8 @@
+{
+  "name": "Leave Calendar System",
+  "description": "An interactive calendar dashboard to manage, request, and track leaves for teams across month, week, and day views.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

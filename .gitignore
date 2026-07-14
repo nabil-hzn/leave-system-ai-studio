@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# SQLite runtime data
+server/leave-system.db
+server/leave-system.db-shm
+server/leave-system.db-wal
+
+.env
+.env.local
