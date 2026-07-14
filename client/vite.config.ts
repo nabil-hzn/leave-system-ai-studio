@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig(() => ({
-  base: "/",
+  base: "/leave-system-ai-studio/",
   plugins: [react()],
   server: {
     port: 3000,
