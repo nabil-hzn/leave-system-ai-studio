@@ -1,0 +1,21 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "users/{uid}": {
+      "schema": "user",
+      "description": "User profiles"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
 import { SHIFTS, type LeaveRequest, type Shift } from "../types";
-import type { ActorMode } from "../state";
+import { useAppStore, type ActorMode } from "../state";
 import { addDays, isSameDay, startOfWeek, toISODate, WEEKDAY_LABELS } from "../utils/date";
 import LeaveChip from "./LeaveChip";
 
@@ -20,7 +20,8 @@ export default function CalendarWeekView({
   onRescheduleLeave: (leave: LeaveRequest, date: string, shift?: Shift) => void;
 }) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
-  const canDrag = mode === "approver";
+  const { currentUser } = useAppStore();
+  const canDrag = true;
   const start = startOfWeek(currentDate);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
   const today = new Date();
@@ -86,7 +87,7 @@ export default function CalendarWeekView({
                       leave={l}
                       onClick={() => onOpenDetail(l)}
                       showShift={false}
-                      draggable={canDrag && l.status !== "approved"}
+                      draggable={canDrag}
                     />
                   ))}
                 </div>

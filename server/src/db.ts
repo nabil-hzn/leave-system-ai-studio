@@ -12,8 +12,8 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    email TEXT UNIQUE,
-    picture TEXT,
+    email TEXT,
+    firebase_uid TEXT,
     role TEXT NOT NULL DEFAULT 'requester'
   );
 
@@ -32,18 +32,17 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_leave_date_shift ON leave_requests(date, shift);
 `);
 
-const leaveColumns = db.prepare("PRAGMA table_info(leave_requests)").all() as { name: string }[];
-if (!leaveColumns.some((c) => c.name === "remark")) {
-  db.exec("ALTER TABLE leave_requests ADD COLUMN remark TEXT");
-}
-
 const userColumns = db.prepare("PRAGMA table_info(users)").all() as { name: string }[];
 if (!userColumns.some((c) => c.name === "email")) {
   db.exec("ALTER TABLE users ADD COLUMN email TEXT");
-  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)");
 }
-if (!userColumns.some((c) => c.name === "picture")) {
-  db.exec("ALTER TABLE users ADD COLUMN picture TEXT");
+if (!userColumns.some((c) => c.name === "firebase_uid")) {
+  db.exec("ALTER TABLE users ADD COLUMN firebase_uid TEXT");
+}
+
+const leaveColumns = db.prepare("PRAGMA table_info(leave_requests)").all() as { name: string }[];
+if (!leaveColumns.some((c) => c.name === "remark")) {
+  db.exec("ALTER TABLE leave_requests ADD COLUMN remark TEXT");
 }
 
 const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get() as { count: number };
@@ -53,3 +52,18 @@ if (userCount.count === 0) {
     insert.run(name);
   }
 }
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS access_control (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('admin', 'approver', 'requestor'))
+  );
+`);
+
+const acCount = db.prepare("SELECT COUNT(*) as count FROM access_control").get() as { count: number };
+if (acCount.count === 0) {
+  const insertAC = db.prepare("INSERT INTO access_control (email, role) VALUES (?, ?)");
+  insertAC.run("nabil@pontiacland.com", "admin");
+}
+

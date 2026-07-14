@@ -12,7 +12,6 @@ export default function Sidebar({
   setActiveNav,
   onAddRequest,
   mode,
-  setMode,
   users,
   actingUserId,
   setActingUserId,
@@ -20,12 +19,12 @@ export default function Sidebar({
   onClose,
   collapsed,
   onToggleCollapse,
+  onSignOutClick,
 }: {
   activeNav: NavPage;
   setActiveNav: (p: NavPage) => void;
   onAddRequest: () => void;
   mode: ActorMode;
-  setMode: (m: ActorMode) => void;
   users: User[];
   actingUserId: number | null;
   setActingUserId: (id: number) => void;
@@ -33,9 +32,11 @@ export default function Sidebar({
   onClose: () => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  onSignOutClick?: () => void;
 }) {
+  const { currentUser } = useAppStore();
   const actingUser = users.find((u) => u.id === actingUserId);
-  const { currentUser, setCurrentUser } = useAppStore();
+
 
   return (
     <>
@@ -88,99 +89,44 @@ export default function Sidebar({
             <span className="sidebar-nav-icon">{NAV_ITEMS[1].icon}</span>
             <span className="sidebar-nav-label">{NAV_ITEMS[1].label}</span>
           </button>
+
+          {currentUser?.role === "admin" && (
+            <button
+              type="button"
+              className={`sidebar-nav-item${activeNav === "accessControl" ? " is-active" : ""}`}
+              onClick={() => {
+                setActiveNav("accessControl");
+                onClose();
+              }}
+              title="Access Control"
+            >
+              <span className="sidebar-nav-icon">🛡️</span>
+              <span className="sidebar-nav-label">Access Control</span>
+            </button>
+          )}
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="access-tier-card">
-            <span className="access-tier-label">Access Mode</span>
-            <div className="mode-switch sidebar-mode-switch" role="tablist" aria-label="Mode">
-              <button
-                type="button"
-                className={mode === "requester" ? "is-active" : ""}
-                onClick={() => setMode("requester")}
-              >
-                Requester
-              </button>
-              <button
-                type="button"
-                className={mode === "approver" ? "is-active" : ""}
-                onClick={() => setMode("approver")}
-              >
-                Approver
-              </button>
-            </div>
-          </div>
-
           <div className="acting-user-block">
             <span className="acting-user-avatar">{actingUser?.name.charAt(0) ?? "?"}</span>
-            <div className="acting-user-info">
-              <select
-                className="acting-user-select"
-                value={actingUserId ?? ""}
-                onChange={(e) => setActingUserId(Number(e.target.value))}
-                aria-label="Acting as"
-              >
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
-              <span className="acting-user-role">{mode === "requester" ? "Requester" : "Approver"}</span>
+            <div className="acting-user-info" style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <span className="acting-user-name-static" style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--on-navy)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={actingUser?.name}>
+                {actingUser?.name ?? "Unknown"}
+              </span>
+              <span className="acting-user-role" style={{ textTransform: "capitalize" }}>{currentUser?.role ?? "Requestor"}</span>
             </div>
           </div>
 
-          {currentUser && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              padding: "12px",
-              borderTop: "1px solid var(--navy-border)",
-              marginTop: "8px",
-              background: "rgba(255, 255, 255, 0.03)",
-              borderRadius: "var(--radius-md)",
-            }}>
-              {currentUser.picture ? (
-                <img
-                  src={currentUser.picture}
-                  alt={currentUser.name}
-                  style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
-                />
-              ) : (
-                <span className="acting-user-avatar" style={{ margin: 0 }}>
-                  {currentUser.name.charAt(0)}
-                </span>
-              )}
-              <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, textAlign: "left" }}>
-                <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--on-navy)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {currentUser.name}
-                </span>
-                <span style={{ fontSize: "0.75rem", color: "var(--on-navy-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {currentUser.email}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCurrentUser(null)}
-                title="Sign Out"
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#ea4335",
-                  cursor: "pointer",
-                  fontSize: "1.1rem",
-                  padding: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "4px",
-                }}
-              >
-                🚪
-              </button>
-            </div>
-          )}
+          <button
+            type="button"
+            className="sidebar-nav-item"
+            style={{ marginTop: "12px", border: "1px solid var(--navy-border)", background: "rgba(255, 255, 255, 0.03)" }}
+            onClick={onSignOutClick}
+            title="Sign Out"
+          >
+            <span className="sidebar-nav-icon">🚪</span>
+            <span className="sidebar-nav-label">Sign Out</span>
+          </button>
         </div>
       </aside>
 

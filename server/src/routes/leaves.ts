@@ -122,9 +122,6 @@ leavesRouter.patch("/:id/date", (req, res) => {
     | { id: number; user_id: number; shift: string; status: string }
     | undefined;
   if (!existing) return res.status(404).json({ error: "Not found" });
-  if (existing.status === "approved") {
-    return res.status(400).json({ error: "Approved requests cannot be rescheduled" });
-  }
 
   const targetShift = (typeof shift === "string" && SHIFTS.includes(shift as any)) ? shift : existing.shift;
 

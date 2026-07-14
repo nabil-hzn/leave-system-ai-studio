@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SHIFTS, type LeaveRequest, type LeaveStatus, type Shift } from "../types";
-import type { ActorMode } from "../state";
+import { useAppStore, type ActorMode } from "../state";
 import { addDays, isSameDay, monthGridRange, toISODate, WEEKDAY_LABELS } from "../utils/date";
 import LeaveChip from "./LeaveChip";
 
@@ -27,7 +27,8 @@ export default function CalendarMonthView({
   onRescheduleLeave: (leave: LeaveRequest, date: string, shift?: Shift) => void;
 }) {
   const [dragOverIso, setDragOverIso] = useState<string | null>(null);
-  const canDrag = mode === "approver";
+  const { currentUser } = useAppStore();
+  const canDrag = true;
   const { start, end } = monthGridRange(currentDate);
   const dayCount = Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
   const days: Date[] = Array.from({ length: dayCount }, (_, i) => addDays(start, i));
@@ -97,7 +98,7 @@ export default function CalendarMonthView({
                     key={l.id}
                     leave={l}
                     onClick={() => onOpenDetail(l)}
-                    draggable={canDrag && l.status !== "approved"}
+                    draggable={canDrag}
                   />
                 ))}
                 {overflow > 0 && (

@@ -38,13 +38,17 @@ export default function CreateLeaveModal({
         <form onSubmit={submit}>
           <label>
             Requester
-            <select value={userId ?? ""} onChange={(e) => setUserId(Number(e.target.value))} required>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
+            <div style={{
+              padding: "8px 10px",
+              border: "1px solid var(--cal-border)",
+              borderRadius: "var(--radius-sm)",
+              background: "var(--cal-outside-bg)",
+              color: "var(--cal-ink)",
+              fontWeight: 500,
+              fontSize: "0.95rem"
+            }}>
+              {users.find((u) => u.id === userId)?.name ?? "Unknown"}
+            </div>
           </label>
 
           <label>

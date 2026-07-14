@@ -1,22 +1,23 @@
 import { create } from "zustand";
 import { addDays } from "./utils/date";
-import type { LeaveRequest, Shift, User } from "./types";
+import type { LeaveRequest, Shift } from "./types";
 
 export type ViewMode = "month" | "week" | "day";
 export type ActorMode = "requester" | "approver";
-export type NavPage = "calendar" | "myRequests";
+export type NavPage = "calendar" | "myRequests" | "accessControl";
 
 interface AppState {
   view: ViewMode;
   currentDate: Date;
   mode: ActorMode;
   actingUserId: number | null;
-  currentUser: User | null;
   sidebarOpen: boolean;
   sidebarCollapsed: boolean;
   activeNav: NavPage;
   createModal: { open: boolean; date?: string; shift?: Shift };
   detailLeave: LeaveRequest | null;
+  currentUser: { id: number; name: string; email: string | null; role: string } | null;
+  authLoading: boolean;
 
   setView: (v: ViewMode) => void;
   setCurrentDate: (d: Date) => void;
@@ -25,7 +26,6 @@ interface AppState {
   goNext: () => void;
   setMode: (m: ActorMode) => void;
   setActingUserId: (id: number | null) => void;
-  setCurrentUser: (user: User | null) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebarCollapsed: () => void;
@@ -34,30 +34,22 @@ interface AppState {
   closeCreateModal: () => void;
   openDetail: (leave: LeaveRequest) => void;
   closeDetail: () => void;
+  setCurrentUser: (user: { id: number; name: string; email: string | null; role: string } | null) => void;
+  setAuthLoading: (loading: boolean) => void;
 }
-
-const getStoredUser = (): User | null => {
-  try {
-    const saved = localStorage.getItem("sso_user");
-    return saved ? JSON.parse(saved) : null;
-  } catch {
-    return null;
-  }
-};
-
-const initialUser = getStoredUser();
 
 export const useAppStore = create<AppState>((set, get) => ({
   view: "month",
   currentDate: new Date(),
   mode: "requester",
-  actingUserId: initialUser ? initialUser.id : null,
-  currentUser: initialUser,
+  actingUserId: null,
   sidebarOpen: false,
   sidebarCollapsed: false,
   activeNav: "calendar",
   createModal: { open: false },
   detailLeave: null,
+  currentUser: null,
+  authLoading: true,
 
   setView: (view) => set({ view }),
   setCurrentDate: (currentDate) => set({ currentDate }),
@@ -82,18 +74,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setMode: (mode) => set({ mode }),
   setActingUserId: (actingUserId) => set({ actingUserId }),
-  setCurrentUser: (currentUser) => {
-    try {
-      if (currentUser) {
-        localStorage.setItem("sso_user", JSON.stringify(currentUser));
-      } else {
-        localStorage.removeItem("sso_user");
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    set({ currentUser, actingUserId: currentUser ? currentUser.id : null });
-  },
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   toggleSidebarCollapsed: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
@@ -102,4 +82,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   closeCreateModal: () => set({ createModal: { open: false } }),
   openDetail: (detailLeave) => set({ detailLeave }),
   closeDetail: () => set({ detailLeave: null }),
+  setCurrentUser: (currentUser) => set({ currentUser, actingUserId: currentUser ? currentUser.id : null }),
+  setAuthLoading: (authLoading) => set({ authLoading }),
 }));

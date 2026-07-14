@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "./utils/firebase";
 import { useLeaves, useUpdateLeaveDate, useUsers } from "./api";
 import type { Shift, LeaveRequest } from "./types";
 import CalendarDayView from "./components/CalendarDayView";
@@ -9,7 +11,8 @@ import Header from "./components/Header";
 import LeaveDetailModal from "./components/LeaveDetailModal";
 import MyRequestsView from "./components/MyRequestsView";
 import Sidebar from "./components/Sidebar";
-import Login from "./components/Login";
+import LoginPage from "./components/LoginPage";
+import AccessControlView from "./components/AccessControlView";
 import { useAppStore } from "./state";
 import { addDays, monthGridRange, startOfWeek, toISODate } from "./utils/date";
 
@@ -45,15 +48,67 @@ export default function App() {
     openDetail,
     closeDetail,
     currentUser,
+    setCurrentUser,
+    authLoading,
+    setAuthLoading,
   } = useAppStore();
 
   const { data: users = [] } = useUsers();
 
   useEffect(() => {
-    if (actingUserId === null && users.length > 0) {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const response = await fetch("/api/users/sync", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || firebaseUser.email?.split("@")[0],
+            }),
+          });
+          if (response.ok) {
+            const syncedUser = await response.json();
+            setCurrentUser(syncedUser);
+          } else {
+            setCurrentUser(null);
+            try {
+              await auth.signOut();
+            } catch (soErr) {
+              console.error("Error signing out after sync failure on initial load:", soErr);
+            }
+          }
+        } catch (err) {
+          console.error("Error syncing authenticated user:", err);
+          setCurrentUser(null);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [setCurrentUser, setAuthLoading]);
+
+  useEffect(() => {
+    if (currentUser) {
+      const isApproverOrAdmin = currentUser.role === "admin" || currentUser.role === "approver";
+      const targetMode = isApproverOrAdmin ? "approver" : "requester";
+      if (mode !== targetMode) {
+        setMode(targetMode);
+      }
+    }
+  }, [currentUser, mode, setMode]);
+
+  useEffect(() => {
+    if (actingUserId === null && !currentUser && users.length > 0) {
       setActingUserId(users[0].id);
     }
-  }, [users, actingUserId, setActingUserId]);
+  }, [users, actingUserId, setActingUserId, currentUser]);
 
   const viewRange = useMemo(() => {
     if (view === "month") {
@@ -82,9 +137,7 @@ export default function App() {
     targetShift?: Shift;
   } | null>(null);
 
-  if (!currentUser) {
-    return <Login />;
-  }
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   const handleSelectDay = (d: Date) => {
     setCurrentDate(d);
@@ -105,7 +158,7 @@ export default function App() {
           setRescheduleConfirm(null);
         },
         onError: (err) => {
-          window.alert((err as Error).message || "Could not reschedule this request.");
+          console.error("Reschedule failed:", (err as Error).message || "Could not reschedule this request.");
           setRescheduleConfirm(null);
         },
       }
@@ -116,6 +169,19 @@ export default function App() {
     setRescheduleConfirm(null);
   };
 
+  if (authLoading) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100vh", background: "var(--page-bg)", color: "var(--cal-ink-muted)" }}>
+        <div style={{ fontSize: "2.5rem", marginBottom: "12px", animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}>📆</div>
+        <div style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--cal-ink)" }}>Initializing Portal...</div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <LoginPage />;
+  }
+
   return (
     <div className="app-shell-row">
       <Sidebar
@@ -123,7 +189,6 @@ export default function App() {
         setActiveNav={setActiveNav}
         onAddRequest={() => openCreateModal(toISODate(currentDate))}
         mode={mode}
-        setMode={setMode}
         users={users}
         actingUserId={actingUserId}
         setActingUserId={setActingUserId}
@@ -131,6 +196,7 @@ export default function App() {
         onClose={() => setSidebarOpen(false)}
         collapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapsed}
+        onSignOutClick={() => setShowSignOutConfirm(true)}
       />
 
       <div className="app-main">
@@ -212,6 +278,26 @@ export default function App() {
             </main>
           </>
         )}
+
+        {activeNav === "accessControl" && currentUser?.role === "admin" && (
+          <>
+            <header className="app-header">
+              <div className="header-left">
+                <button
+                  type="button"
+                  className="icon-btn hamburger-btn"
+                  onClick={toggleSidebar}
+                  aria-label="Toggle menu"
+                >
+                  ☰
+                </button>
+              </div>
+            </header>
+            <main className="calendar-area">
+              <AccessControlView />
+            </main>
+          </>
+        )}
       </div>
 
       {createModal.open && (
@@ -256,6 +342,37 @@ export default function App() {
                 disabled={updateLeaveDate.isPending}
               >
                 {updateLeaveDate.isPending ? "Updating…" : "Confirm Reschedule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSignOutConfirm && (
+        <div className="modal-scrim" onClick={() => setShowSignOutConfirm(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ marginBottom: "14px", fontWeight: 700 }}>Confirm Sign Out</h2>
+            <div style={{ fontSize: "0.95rem", color: "var(--cal-ink-muted)", marginBottom: "24px", lineHeight: "1.5" }}>
+              Are you sure you want to sign out of the Leave Calendar portal?
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn-secondary" onClick={() => setShowSignOutConfirm(false)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary animate-hover"
+                style={{ background: "#ea4335", borderColor: "#ea4335" }}
+                onClick={async () => {
+                  try {
+                    await signOut(auth);
+                    setShowSignOutConfirm(false);
+                  } catch (err) {
+                    console.error("Error signing out:", err);
+                  }
+                }}
+              >
+                Sign Out
               </button>
             </div>
           </div>

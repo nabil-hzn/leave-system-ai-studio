@@ -14,10 +14,11 @@ export default function LeaveChip({
   draggable?: boolean;
 }) {
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       className={`chip chip-${leave.status}${draggable ? " chip-draggable" : ""}`}
-      draggable={draggable}
+      draggable={draggable ? "true" : "false"}
       onDragStart={
         draggable
           ? (e) => {
@@ -30,10 +31,17 @@ export default function LeaveChip({
         e.stopPropagation();
         onClick();
       }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick();
+        }
+      }}
       title={`${leave.userName} · ${leave.shift} · ${leave.status}${draggable ? " · drag to reschedule" : ""}`}
     >
       {showShift && <span className="chip-shift">{SHIFT_INITIAL[leave.shift]}</span>}
       <span className="chip-name">{leave.userName}</span>
-    </button>
+    </div>
   );
 }

@@ -659,6 +659,8 @@ button {
   white-space: nowrap;
   text-overflow: ellipsis;
   transition: transform 0.1s ease, box-shadow 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .chip:hover {
@@ -697,6 +699,7 @@ button {
 
 .chip-draggable {
   cursor: grab;
+  -webkit-user-drag: element;
 }
 
 .chip-draggable:active {
@@ -1306,3 +1309,156 @@ button {
     flex-wrap: wrap;
   }
 }
+
+/* ---------- Login Page ---------- */
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100vw;
+  background: radial-gradient(circle at 10% 20%, rgba(90, 92, 234, 0.08) 0%, rgba(255, 255, 255, 0) 90%), var(--page-bg);
+  padding: 24px;
+}
+
+.login-card {
+  background: var(--cal-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+  width: 100%;
+  max-width: 440px;
+  padding: 40px;
+  border: 1px solid var(--cal-border);
+  animation: modal-in 0.3s ease;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo {
+  font-size: 2.5rem;
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 16px;
+}
+
+.login-header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--cal-ink);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.02em;
+}
+
+.login-subtitle {
+  font-size: 0.9rem;
+  color: var(--cal-ink-muted);
+  margin: 0;
+}
+
+.login-prompt {
+  color: var(--cal-ink-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.google-signin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  background: var(--cal-white);
+  color: #3c4043;
+  border: 1px solid var(--cal-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.google-signin-btn:hover:not(:disabled) {
+  background: #f8f9fa;
+  box-shadow: var(--shadow-md);
+  border-color: #d2d6dc;
+}
+
+.google-signin-btn:active:not(:disabled) {
+  background: #f1f3f4;
+}
+
+.google-signin-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.google-icon {
+  flex-shrink: 0;
+}
+
+.form-error-banner {
+  background: var(--rejected-bg);
+  color: var(--rejected-text);
+  border: 1px solid var(--rejected-border);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 32px;
+  font-size: 0.8rem;
+  color: var(--cal-ink-muted);
+}
+
+.security-note {
+  font-size: 0.8rem !important;
+  color: var(--cal-ink-muted);
+  margin: 0;
+}
+
+.spinner-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+

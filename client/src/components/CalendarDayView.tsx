@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SHIFTS, type LeaveRequest, type Shift } from "../types";
-import type { ActorMode } from "../state";
+import { useAppStore, type ActorMode } from "../state";
 import { toISODate } from "../utils/date";
 import LeaveChip from "./LeaveChip";
 
@@ -22,7 +22,8 @@ export default function CalendarDayView({
   onRescheduleLeave: (leave: LeaveRequest, date: string, shift?: Shift) => void;
 }) {
   const [dragOverShift, setDragOverShift] = useState<Shift | null>(null);
-  const canDrag = mode === "approver";
+  const { currentUser } = useAppStore();
+  const canDrag = true;
   const iso = toISODate(currentDate);
   const byShift = new Map<Shift, LeaveRequest[]>();
   for (const l of leaves) {
@@ -85,7 +86,7 @@ export default function CalendarDayView({
                     leave={l}
                     onClick={() => onOpenDetail(l)}
                     showShift={false}
-                    draggable={canDrag && l.status !== "approved"}
+                    draggable={canDrag}
                   />
                   {l.reason && <span className="day-leave-reason">{l.reason}</span>}
                 </div>
