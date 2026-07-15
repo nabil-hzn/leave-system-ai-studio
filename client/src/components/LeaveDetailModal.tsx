@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useDeleteLeave, useUpdateLeaveStatus, useUpdateLeaveDate } from "../api";
+import { useDeleteLeave, useUpdateLeaveStatus } from "../api";
 import { useAppStore, type ActorMode } from "../state";
-import { SHIFTS, type ApprovalConflictError, type LeaveRequest, type Shift } from "../types";
+import type { ApprovalConflictError, LeaveRequest } from "../types";
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Pending",
@@ -22,15 +22,11 @@ export default function LeaveDetailModal({
 }) {
   const updateStatus = useUpdateLeaveStatus();
   const deleteLeave = useDeleteLeave();
-  const updateLeaveDate = useUpdateLeaveDate();
   const { currentUser } = useAppStore();
   const [remark, setRemark] = useState("");
-  const [targetDate, setTargetDate] = useState(leave.date);
-  const [targetShift, setTargetShift] = useState<Shift>(leave.shift);
 
   const conflictBody = (updateStatus.error as (Error & { body?: ApprovalConflictError }) | null)?.body;
 
-  const isApproverOrAdmin = mode === "approver" || currentUser?.role === "admin" || currentUser?.role === "approver";
   const canModerate = mode === "approver" && leave.status === "pending";
   const canWithdraw = mode === "requester" && leave.status === "pending" && leave.userId === actingUserId;
 
@@ -78,72 +74,7 @@ export default function LeaveDetailModal({
           </label>
         )}
 
-        {isApproverOrAdmin && (
-          <div style={{ marginTop: "20px", paddingTop: "16px", borderTop: "1px dashed var(--cal-border)" }}>
-            <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--cal-ink)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "6px" }}>
-              🔄 Reschedule Request
-            </h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-              <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.82rem", fontWeight: 500, color: "var(--cal-ink-muted)" }}>
-                Date
-                <input
-                  type="date"
-                  value={targetDate}
-                  onChange={(e) => setTargetDate(e.target.value)}
-                  style={{ width: "100%", padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--cal-border)", background: "var(--field-bg)", color: "var(--cal-ink)" }}
-                />
-              </label>
-              <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.82rem", fontWeight: 500, color: "var(--cal-ink-muted)" }}>
-                Shift
-                <select
-                  value={targetShift}
-                  onChange={(e) => setTargetShift(e.target.value as Shift)}
-                  style={{ width: "100%", padding: "6px 10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--cal-border)", background: "var(--field-bg)", color: "var(--cal-ink)" }}
-                >
-                  {SHIFTS.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            
-            {updateLeaveDate.isError && (
-              <div className="form-error" style={{ marginBottom: "12px" }}>
-                {updateLeaveDate.error.message}
-              </div>
-            )}
-            {updateLeaveDate.isSuccess && (
-              <div style={{ color: "var(--success-color)", fontSize: "0.85rem", marginBottom: "12px" }}>
-                ✓ Successfully rescheduled!
-              </div>
-            )}
-
-            <button
-              type="button"
-              className="btn-primary"
-              style={{ width: "100%", padding: "8px" }}
-              disabled={updateLeaveDate.isPending || (targetDate === leave.date && targetShift === leave.shift)}
-              onClick={() => {
-                updateLeaveDate.mutate(
-                  { id: leave.id, date: targetDate, shift: targetShift },
-                  {
-                    onSuccess: () => {
-                      setTimeout(() => {
-                        onClose();
-                      }, 1000);
-                    }
-                  }
-                );
-              }}
-            >
-              {updateLeaveDate.isPending ? "Rescheduling…" : "Reschedule Now"}
-            </button>
-          </div>
-        )}
-
-        <div className="modal-actions" style={{ marginTop: isApproverOrAdmin ? "16px" : "20px" }}>
+        <div className="modal-actions" style={{ marginTop: "20px" }}>
           {canModerate && (
             <>
               <button

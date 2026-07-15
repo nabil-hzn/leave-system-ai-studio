@@ -706,6 +706,29 @@ button {
   cursor: grabbing;
 }
 
+/* Custom dragging styles for visual polish and robust drag-over targeting */
+.chip.dragging {
+  opacity: 0.45;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+body.dragging-active .month-day-cell * {
+  pointer-events: none !important;
+}
+
+body.dragging-active .week-cell * {
+  pointer-events: none !important;
+}
+
+body.dragging-active .day-shift-section * {
+  pointer-events: none !important;
+}
+
+body.dragging-active .chip.dragging {
+  pointer-events: auto !important;
+}
+
 /* ---------- Month view ---------- */
 
 .month-weekday-row {

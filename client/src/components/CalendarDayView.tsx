@@ -21,8 +21,8 @@ export default function CalendarDayView({
   onCreate: (date: string, shift: Shift) => void;
   onRescheduleLeave: (leave: LeaveRequest, date: string, shift?: Shift) => void;
 }) {
-  const [dragOverShift, setDragOverShift] = useState<Shift | null>(null);
-  const { currentUser } = useAppStore();
+  const { currentUser, actingUserId: storeActingUserId, draggedLeave, setDraggedLeave } = useAppStore();
+  const effectiveActingUserId = storeActingUserId ?? actingUserId;
   const canDrag = true;
   const iso = toISODate(currentDate);
   const byShift = new Map<Shift, LeaveRequest[]>();
@@ -44,27 +44,44 @@ export default function CalendarDayView({
         return (
           <section
             key={shift.key}
-            className={`day-shift-section${dragOverShift === shift.key ? " is-drag-over" : ""}`}
+            className="day-shift-section"
             onDragOver={
               canDrag
                 ? (e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";
-                    setDragOverShift(shift.key);
                   }
                 : undefined
             }
-            onDragLeave={canDrag ? () => setDragOverShift((cur) => (cur === shift.key ? null : cur)) : undefined}
+            onDragEnter={
+              canDrag
+                ? (e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add("is-drag-over");
+                  }
+                : undefined
+            }
+            onDragLeave={
+              canDrag
+                ? (e) => {
+                    e.currentTarget.classList.remove("is-drag-over");
+                  }
+                : undefined
+            }
             onDrop={
               canDrag
                 ? (e) => {
                     e.preventDefault();
-                    setDragOverShift(null);
+                    e.currentTarget.classList.remove("is-drag-over");
                     const id = Number(e.dataTransfer.getData("text/plain"));
-                    const dragged = leaves.find((l) => l.id === id);
-                    if (dragged && dragged.shift !== shift.key) {
+                    const storeDragged = useAppStore.getState().draggedLeave;
+                    const dragged = storeDragged || draggedLeave || leaves.find((l) => l.id === id);
+                    const isOwner = dragged && ((currentUser && dragged.userId === currentUser.id) || (effectiveActingUserId !== null && dragged.userId === effectiveActingUserId));
+                    const canUserReschedule = mode === "approver" || isOwner;
+                    if (dragged && dragged.status !== "approved" && canUserReschedule && dragged.shift !== shift.key) {
                       onRescheduleLeave(dragged, iso, shift.key);
                     }
+                    setDraggedLeave(null);
                   }
                 : undefined
             }

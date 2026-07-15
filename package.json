@@ -12,9 +12,15 @@
     "start": "npm run start --prefix server"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "@types/pg": "^8.20.0",
+    "concurrently": "^9.1.0",
+    "drizzle-kit": "^0.31.10"
   },
   "dependencies": {
-    "firebase": "^12.16.0"
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "firebase": "^12.16.0",
+    "firebase-admin": "^14.1.0",
+    "pg": "^8.22.0"
   }
 }

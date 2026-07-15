@@ -26,8 +26,7 @@ export default function CalendarMonthView({
   onOpenDetail: (leave: LeaveRequest) => void;
   onRescheduleLeave: (leave: LeaveRequest, date: string, shift?: Shift) => void;
 }) {
-  const [dragOverIso, setDragOverIso] = useState<string | null>(null);
-  const { currentUser } = useAppStore();
+  const { currentUser, actingUserId, draggedLeave, setDraggedLeave } = useAppStore();
   const canDrag = true;
   const { start, end } = monthGridRange(currentDate);
   const dayCount = Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
@@ -67,26 +66,45 @@ export default function CalendarMonthView({
           return (
             <div
               key={iso}
-              className={`month-day-cell${inMonth ? "" : " is-outside"}${dragOverIso === iso ? " is-drag-over" : ""}`}
+              className={`month-day-cell${inMonth ? "" : " is-outside"}`}
               onClick={() => onSelectDay(day)}
               onDragOver={
                 canDrag
                   ? (e) => {
                       e.preventDefault();
                       e.dataTransfer.dropEffect = "move";
-                      setDragOverIso(iso);
                     }
                   : undefined
               }
-              onDragLeave={canDrag ? () => setDragOverIso((cur) => (cur === iso ? null : cur)) : undefined}
+              onDragEnter={
+                canDrag
+                  ? (e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add("is-drag-over");
+                    }
+                  : undefined
+              }
+              onDragLeave={
+                canDrag
+                  ? (e) => {
+                      e.currentTarget.classList.remove("is-drag-over");
+                    }
+                  : undefined
+              }
               onDrop={
                 canDrag
                   ? (e) => {
                       e.preventDefault();
-                      setDragOverIso(null);
+                      e.currentTarget.classList.remove("is-drag-over");
                       const id = Number(e.dataTransfer.getData("text/plain"));
-                      const dragged = leaves.find((l) => l.id === id);
-                      if (dragged && dragged.date !== iso) onRescheduleLeave(dragged, iso);
+                      const storeDragged = useAppStore.getState().draggedLeave;
+                      const dragged = storeDragged || draggedLeave || leaves.find((l) => l.id === id);
+                      const isOwner = dragged && ((currentUser && dragged.userId === currentUser.id) || (actingUserId !== null && dragged.userId === actingUserId));
+                      const canUserReschedule = mode === "approver" || isOwner;
+                      if (dragged && dragged.status !== "approved" && canUserReschedule && dragged.date !== iso) {
+                        onRescheduleLeave(dragged, iso);
+                      }
+                      setDraggedLeave(null);
                     }
                   : undefined
               }
