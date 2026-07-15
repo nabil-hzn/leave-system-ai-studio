@@ -18,6 +18,7 @@ interface AppState {
   detailLeave: LeaveRequest | null;
   currentUser: { id: number; name: string; email: string | null; role: string } | null;
   authLoading: boolean;
+  draggedLeave: LeaveRequest | null;
 
   setView: (v: ViewMode) => void;
   setCurrentDate: (d: Date) => void;
@@ -36,6 +37,7 @@ interface AppState {
   closeDetail: () => void;
   setCurrentUser: (user: { id: number; name: string; email: string | null; role: string } | null) => void;
   setAuthLoading: (loading: boolean) => void;
+  setDraggedLeave: (leave: LeaveRequest | null) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -50,6 +52,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   detailLeave: null,
   currentUser: null,
   authLoading: true,
+  draggedLeave: null,
 
   setView: (view) => set({ view }),
   setCurrentDate: (currentDate) => set({ currentDate }),
@@ -84,4 +87,5 @@ export const useAppStore = create<AppState>((set, get) => ({
   closeDetail: () => set({ detailLeave: null }),
   setCurrentUser: (currentUser) => set({ currentUser, actingUserId: currentUser ? currentUser.id : null }),
   setAuthLoading: (authLoading) => set({ authLoading }),
+  setDraggedLeave: (draggedLeave) => set({ draggedLeave }),
 }));

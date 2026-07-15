@@ -145,6 +145,7 @@ export default function App() {
   };
 
   const handleRescheduleLeave = (leave: LeaveRequest, date: string, shift?: Shift) => {
+    updateLeaveDate.reset();
     setRescheduleConfirm({ leave, targetDate: date, targetShift: shift });
   };
 
@@ -159,13 +160,13 @@ export default function App() {
         },
         onError: (err) => {
           console.error("Reschedule failed:", (err as Error).message || "Could not reschedule this request.");
-          setRescheduleConfirm(null);
         },
       }
     );
   };
 
   const handleCancelReschedule = () => {
+    updateLeaveDate.reset();
     setRescheduleConfirm(null);
   };
 
@@ -331,6 +332,13 @@ export default function App() {
                 </div>
               </div>
             </div>
+            
+            {updateLeaveDate.isError && (
+              <div style={{ marginBottom: "16px", padding: "10px", background: "rgba(234,67,53,0.1)", border: "1px solid rgba(234,67,53,0.3)", borderRadius: "var(--radius-sm)", color: "#ea4335", fontSize: "0.85rem" }}>
+                ❌ {updateLeaveDate.error.message}
+              </div>
+            )}
+
             <div className="modal-actions">
               <button type="button" className="btn-secondary" onClick={handleCancelReschedule}>
                 Cancel

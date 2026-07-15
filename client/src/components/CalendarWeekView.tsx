@@ -19,8 +19,7 @@ export default function CalendarWeekView({
   onCreate: (date: string, shift: (typeof SHIFTS)[number]["key"]) => void;
   onRescheduleLeave: (leave: LeaveRequest, date: string, shift?: Shift) => void;
 }) {
-  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
-  const { currentUser } = useAppStore();
+  const { currentUser, actingUserId, draggedLeave, setDraggedLeave } = useAppStore();
   const canDrag = true;
   const start = startOfWeek(currentDate);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
@@ -55,28 +54,45 @@ export default function CalendarWeekView({
               return (
                 <div
                   key={cellKey}
-                  className={`week-cell${dragOverKey === cellKey ? " is-drag-over" : ""}`}
+                  className="week-cell"
                   onClick={() => onCreate(iso, shift.key)}
                   onDragOver={
                     canDrag
                       ? (e) => {
                           e.preventDefault();
                           e.dataTransfer.dropEffect = "move";
-                          setDragOverKey(cellKey);
                         }
                       : undefined
                   }
-                  onDragLeave={canDrag ? () => setDragOverKey((cur) => (cur === cellKey ? null : cur)) : undefined}
+                  onDragEnter={
+                    canDrag
+                      ? (e) => {
+                          e.preventDefault();
+                          e.currentTarget.classList.add("is-drag-over");
+                        }
+                      : undefined
+                  }
+                  onDragLeave={
+                    canDrag
+                      ? (e) => {
+                          e.currentTarget.classList.remove("is-drag-over");
+                        }
+                      : undefined
+                  }
                   onDrop={
                     canDrag
                       ? (e) => {
                           e.preventDefault();
-                          setDragOverKey(null);
+                          e.currentTarget.classList.remove("is-drag-over");
                           const id = Number(e.dataTransfer.getData("text/plain"));
-                          const dragged = leaves.find((l) => l.id === id);
-                          if (dragged && (dragged.date !== iso || dragged.shift !== shift.key)) {
+                          const storeDragged = useAppStore.getState().draggedLeave;
+                          const dragged = storeDragged || draggedLeave || leaves.find((l) => l.id === id);
+                          const isOwner = dragged && ((currentUser && dragged.userId === currentUser.id) || (actingUserId !== null && dragged.userId === actingUserId));
+                          const canUserReschedule = mode === "approver" || isOwner;
+                          if (dragged && dragged.status !== "approved" && canUserReschedule && (dragged.date !== iso || dragged.shift !== shift.key)) {
                             onRescheduleLeave(dragged, iso, shift.key);
                           }
+                          setDraggedLeave(null);
                         }
                       : undefined
                   }

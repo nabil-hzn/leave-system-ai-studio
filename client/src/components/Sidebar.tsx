@@ -109,7 +109,7 @@ export default function Sidebar({
         <div className="sidebar-bottom">
           <div className="acting-user-block">
             <span className="acting-user-avatar">{actingUser?.name.charAt(0) ?? "?"}</span>
-            <div className="acting-user-info" style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+            <div className="acting-user-info" style={{ display: collapsed ? "none" : "flex", flexDirection: "column", minWidth: 0 }}>
               <span className="acting-user-name-static" style={{ fontWeight: 600, fontSize: "0.88rem", color: "var(--on-navy)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={actingUser?.name}>
                 {actingUser?.name ?? "Unknown"}
               </span>
